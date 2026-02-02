@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:near_share/features/auth/presentation/providers/auth_provider.dart';
 import 'package:near_share/features/home/presentation/pages/home_page.dart';
 
+import 'package:near_share/features/home/presentation/widgets/floating_navbar.dart';
+
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
 
@@ -12,6 +14,7 @@ class MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
+  bool _isScrolling = false;
 
   final List<String> _titles = [
     'NearShare',
@@ -44,13 +47,33 @@ class _MainScaffoldState extends State<MainScaffold> {
     }
   }
 
+  void _onScroll(ScrollNotification notification) {
+    if (notification is UserScrollNotification) {
+      if (!_isScrolling) {
+        setState(() {
+          _isScrolling = true;
+        });
+        // Reset scrolling state after a short delay so expansion can work again if needed immediately
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            setState(() {
+              _isScrolling = false;
+            });
+          }
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
     final theme = Theme.of(context);
 
+    // Using Stack to float the navbar over the content
     return Scaffold(
+      extendBody: true, // Content goes behind the navbar
       appBar: AppBar(
         title: Text(
           _titles[_selectedIndex],
@@ -86,34 +109,34 @@ class _MainScaffoldState extends State<MainScaffold> {
             ),
         ],
       ),
-      body: _getBody(),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+      body: Stack(
+        children: [
+          // Content Layer with Scroll Listener
+          NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              _onScroll(notification);
+              return false;
+            },
+            child: _getBody(),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.shopping_bag_outlined),
-            selectedIcon: Icon(Icons.shopping_bag),
-            label: 'Rentals',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
-            label: 'Items',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
+
+          // Floating Navbar Layer
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: FloatingNavbar(
+                  selectedIndex: _selectedIndex,
+                  onItemSelected: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
+                  isScrolling: _isScrolling,
+                ),
+              ),
+            ),
           ),
         ],
       ),
