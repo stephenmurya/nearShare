@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "934051412849",
+    "project_id": "nearshare-149f6",
+    "storage_bucket": "nearshare-149f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:934051412849:android:700bed12beefb54ff214d0",
+        "android_client_info": {
+          "package_name": "com.crescence.nearshare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "934051412849-a2ggl7m1bs4ob1gg0j3p70fdelu1kndu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKYDuzWNao_coRjxv89s8avaerNxDvj8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "934051412849-a2ggl7m1bs4ob1gg0j3p70fdelu1kndu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "934051412849-48naa8oc0g7aq55vjqis8ol9hfensd8f.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.crescence.nearshare"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:934051412849:android:e6f30d11015c4774f214d0",
+        "android_client_info": {
+          "package_name": "com.crescence.nearshare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "934051412849-a2ggl7m1bs4ob1gg0j3p70fdelu1kndu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKYDuzWNao_coRjxv89s8avaerNxDvj8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "934051412849-a2ggl7m1bs4ob1gg0j3p70fdelu1kndu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "934051412849-48naa8oc0g7aq55vjqis8ol9hfensd8f.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.nearShare"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

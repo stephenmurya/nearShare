@@ -1,0 +1,304 @@
+{
+    "products": [
+        {
+            "id": "1",
+            "name": "Heavy Duty Concrete Mixer",
+            "category": "Construction",
+            "price": 45000,
+            "image": "https://picsum.photos/seed/1/600/600",
+            "images": [
+                "https://picsum.photos/seed/1/600/600",
+                "https://picsum.photos/seed/101/600/600",
+                "https://picsum.photos/seed/102/600/600"
+            ],
+            "description": "Professional 3.5 cubic foot mixer for construction sites. Ideal for mixing concrete, mortar, and stucco. Features a durable steel drum and powerful motor.",
+            "location": "Maitama, Abuja",
+            "specs": {
+                "Capacity": "3.5 cu ft",
+                "Power Source": "Electric",
+                "Weight": "120 kg",
+                "Voltage": "220V"
+            }
+        },
+        {
+            "id": "2",
+            "name": "JBL Party Speaker (1000W)",
+            "category": "Event",
+            "price": 25000,
+            "image": "https://picsum.photos/seed/2/600/600",
+            "images": [
+                "https://picsum.photos/seed/2/600/600",
+                "https://picsum.photos/seed/201/600/600",
+                "https://picsum.photos/seed/202/600/600"
+            ],
+            "description": "Massive sound for outdoor events and weddings. Features DJ launchpad, mic and guitar inputs, and full panel light show.",
+            "location": "Wuse II, Abuja",
+            "specs": {
+                "Output Power": "1100W",
+                "Bluetooth": "Yes",
+                "Weight": "34.7 kg",
+                "Battery": "No (AC Only)"
+            }
+        },
+        {
+            "id": "3",
+            "name": "Sony FX3 Cinema Camera",
+            "category": "Film",
+            "price": 120000,
+            "image": "https://picsum.photos/seed/3/600/600",
+            "images": [
+                "https://picsum.photos/seed/3/600/600",
+                "https://picsum.photos/seed/301/600/600",
+                "https://picsum.photos/seed/302/600/600"
+            ],
+            "description": "Full-frame cinema line camera with top handle. Perfect for solo shooters, offering 4K 120p recording and S-Cinetone.",
+            "location": "Asokoro, Abuja",
+            "specs": {
+                "Sensor": "Full-Frame CMOS",
+                "Resolution": "12.1 MP",
+                "Video": "4K 120p",
+                "Mount": "E-mount"
+            }
+        },
+        {
+            "id": "4",
+            "name": "Portable Gas Generator",
+            "category": "Power",
+            "price": 30000,
+            "image": "https://picsum.photos/seed/4/600/600",
+            "images": [
+                "https://picsum.photos/seed/4/600/600",
+                "https://picsum.photos/seed/401/600/600",
+                "https://picsum.photos/seed/402/600/600"
+            ],
+            "description": "Quiet inverter generator, perfect for remote shoots and camping. Clean power for sensitive electronics.",
+            "location": "Gwarinpa, Abuja",
+            "specs": {
+                "Watts": "2200W",
+                "Fuel": "Petrol",
+                "Noise Level": "52 dBA",
+                "Weight": "21 kg"
+            }
+        },
+        {
+            "id": "5",
+            "name": "Hydraulic Floor Jack",
+            "category": "Industrial",
+            "price": 15000,
+            "image": "https://picsum.photos/seed/5/600/600",
+            "images": [
+                "https://picsum.photos/seed/5/600/600",
+                "https://picsum.photos/seed/501/600/600",
+                "https://picsum.photos/seed/502/600/600"
+            ],
+            "description": "3-ton capacity heavy duty jack. Low profile design for fitting under sports cars and lowered vehicles.",
+            "location": "Central Area, Abuja",
+            "specs": {
+                "Capacity": "3 Ton",
+                "Min Height": "3.5 in",
+                "Max Height": "18 in",
+                "Material": "Steel"
+            }
+        },
+        {
+            "id": "6",
+            "name": "Electric Jackhammer",
+            "category": "Construction",
+            "price": 35000,
+            "image": "https://picsum.photos/seed/6/600/600",
+            "images": [
+                "https://picsum.photos/seed/6/600/600",
+                "https://picsum.photos/seed/601/600/600",
+                "https://picsum.photos/seed/602/600/600"
+            ],
+            "description": "High-impact demolition hammer for tough jobs. Breaks through concrete and asphalt with ease.",
+            "location": "Garki, Abuja",
+            "specs": {
+                "Power": "2200W",
+                "Impact Rate": "1400 BPM",
+                "Weight": "15 kg",
+                "Chuck": "Hex"
+            }
+        },
+        {
+            "id": "7",
+            "name": "Professional DJ Deck",
+            "category": "Event",
+            "price": 50000,
+            "image": "https://picsum.photos/seed/7/600/600",
+            "images": [
+                "https://picsum.photos/seed/7/600/600",
+                "https://picsum.photos/seed/701/600/600",
+                "https://picsum.photos/seed/702/600/600"
+            ],
+            "description": "Advanced DJ controller with 4-channel mixer. Compatible with Serato DJ Pro and Rekordbox.",
+            "location": "Wuse II, Abuja",
+            "specs": {
+                "Channels": "4",
+                "Jog Wheels": "Full Size",
+                "Inputs": "2 Mic",
+                "Software": "Serato/Rekordbox"
+            }
+        },
+        {
+            "id": "8",
+            "name": "DJI Ronin RS3 Gimbal",
+            "category": "Film",
+            "price": 40000,
+            "image": "https://picsum.photos/seed/8/600/600",
+            "images": [
+                "https://picsum.photos/seed/8/600/600",
+                "https://picsum.photos/seed/801/600/600",
+                "https://picsum.photos/seed/802/600/600"
+            ],
+            "description": "3-axis stabilizer for smooth cinematic shots. Supports cameras up to 3kg payload.",
+            "location": "Maitama, Abuja",
+            "specs": {
+                "Payload": "3 kg",
+                "Battery Life": "12 Hours",
+                "Weight": "1.3 kg",
+                "Connectivity": "Bluetooth 5.0"
+            }
+        },
+        {
+            "id": "9",
+            "name": "Solar Power Station 2000W",
+            "category": "Power",
+            "price": 60000,
+            "image": "https://picsum.photos/seed/9/600/600",
+            "images": [
+                "https://picsum.photos/seed/9/600/600",
+                "https://picsum.photos/seed/901/600/600",
+                "https://picsum.photos/seed/902/600/600"
+            ],
+            "description": "Clean, portable power for outdoors and emergencies. Can power a fridge, TV, or medical devices.",
+            "location": "Asokoro, Abuja",
+            "specs": {
+                "Capacity": "2016Wh",
+                "Output": "2400W AC",
+                "Solar Input": "Max 800W",
+                "Weight": "25 kg"
+            }
+        },
+        {
+            "id": "10",
+            "name": "Industrial Air Compressor",
+            "category": "Industrial",
+            "price": 20000,
+            "image": "https://picsum.photos/seed/10/600/600",
+            "images": [
+                "https://picsum.photos/seed/10/600/600",
+                "https://picsum.photos/seed/1001/600/600",
+                "https://picsum.photos/seed/1002/600/600"
+            ],
+            "description": "High-pressure compressor for industrial pneumatic tools. 50L tank capacity.",
+            "location": "Gwarinpa, Abuja",
+            "specs": {
+                "Tank": "50 Liters",
+                "Pressure": "10 Bar",
+                "Power": "2.5 HP",
+                "Flow": "250 L/min"
+            }
+        },
+        {
+            "id": "11",
+            "name": "Compactor Plate",
+            "category": "Construction",
+            "price": 55000,
+            "image": "https://picsum.photos/seed/11/600/600",
+            "images": [
+                "https://picsum.photos/seed/11/600/600",
+                "https://picsum.photos/seed/1101/600/600",
+                "https://picsum.photos/seed/1102/600/600"
+            ],
+            "description": "Heavy-duty soil and gravel compactor. Perfect for preparing foundations and driveways.",
+            "location": "Central Area, Abuja",
+            "specs": {
+                "Force": "15 kN",
+                "Plate Size": "500x400mm",
+                "Engine": "Petrol 5.5HP",
+                "Weight": "90 kg"
+            }
+        },
+        {
+            "id": "12",
+            "name": "Wireless Microphone System",
+            "category": "Event",
+            "price": 15000,
+            "image": "https://picsum.photos/seed/12/600/600",
+            "images": [
+                "https://picsum.photos/seed/12/600/600",
+                "https://picsum.photos/seed/1201/600/600",
+                "https://picsum.photos/seed/1202/600/600"
+            ],
+            "description": "UHF dual-channel wireless mic set with clear range. Includes 2 handheld microphones.",
+            "location": "Wuse II, Abuja",
+            "specs": {
+                "Range": "100m",
+                "Channels": "Dual",
+                "Freq": "UHF",
+                "Battery": "AA x 2"
+            }
+        },
+        {
+            "id": "13",
+            "name": "Aputure 600d Pro Light",
+            "category": "Film",
+            "price": 85000,
+            "image": "https://picsum.photos/seed/13/600/600",
+            "images": [
+                "https://picsum.photos/seed/13/600/600",
+                "https://picsum.photos/seed/1301/600/600",
+                "https://picsum.photos/seed/1302/600/600"
+            ],
+            "description": "Ultimate brightness daylight-balanced LED video light. Weather resistant and powerful.",
+            "location": "Maitama, Abuja",
+            "specs": {
+                "Output": "600W",
+                "CRI": "96+",
+                "Mount": "Bowens",
+                "Control": "Sidus Link App"
+            }
+        },
+        {
+            "id": "14",
+            "name": "Diesel Water Pump",
+            "category": "Power",
+            "price": 25000,
+            "image": "https://picsum.photos/seed/14/600/600",
+            "images": [
+                "https://picsum.photos/seed/14/600/600",
+                "https://picsum.photos/seed/1401/600/600",
+                "https://picsum.photos/seed/1402/600/600"
+            ],
+            "description": "High-flow pump for irrigation or flood drainage. Self-priming and reliable.",
+            "location": "Garki, Abuja",
+            "specs": {
+                "Inlet/Outlet": "3 inch",
+                "Flow Rate": "60 m3/h",
+                "Lift": "28m",
+                "Fuel": "Diesel"
+            }
+        },
+        {
+            "id": "15",
+            "name": "Forklift Pallet Jack",
+            "category": "Industrial",
+            "price": 10000,
+            "image": "https://picsum.photos/seed/15/600/600",
+            "images": [
+                "https://picsum.photos/seed/15/600/600",
+                "https://picsum.photos/seed/1501/600/600",
+                "https://picsum.photos/seed/1502/600/600"
+            ],
+            "description": "Manual hydraulic jack for moving warehouse pallets. 2500kg capacity.",
+            "location": "Central Area, Abuja",
+            "specs": {
+                "Capacity": "2500 kg",
+                "Fork Length": "1150 mm",
+                "Width": "540 mm",
+                "Wheels": "Nylon"
+            }
+        }
+    ]
+}
