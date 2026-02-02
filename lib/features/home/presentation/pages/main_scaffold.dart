@@ -4,6 +4,7 @@ import 'package:near_share/features/auth/presentation/providers/auth_provider.da
 import 'package:near_share/features/home/presentation/pages/home_page.dart';
 
 import 'package:near_share/features/home/presentation/widgets/floating_navbar.dart';
+import 'package:near_share/features/chat/presentation/pages/chat_page.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -19,6 +20,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   final List<String> _titles = [
     'NearShare',
     'My Rentals',
+    'Chat',
     'My Items',
     'Settings',
   ];
@@ -33,11 +35,13 @@ class _MainScaffoldState extends State<MainScaffold> {
           child: Center(child: Text('My Rentals')),
         );
       case 2:
+        return const ChatPage();
+      case 3:
         return const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Center(child: Text('My Product Management')),
         );
-      case 3:
+      case 4:
         return const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Center(child: Text('App Settings')),

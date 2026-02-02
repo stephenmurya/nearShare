@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color primaryBlue = Color.fromARGB(255, 0, 39, 212);
+  static const Color primaryBlue = Color(0xFF155eef);
   static const Color secondaryGold = Color(0xFFFDC500);
   static const Color surfaceWhite = Color(0xFFFFFBFE);
 

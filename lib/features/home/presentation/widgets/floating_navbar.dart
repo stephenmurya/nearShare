@@ -27,6 +27,7 @@ class _FloatingNavbarState extends State<FloatingNavbar> {
   final List<Map<String, dynamic>> _navItems = [
     {'icon': Iconsax.home, 'label': 'NearShare'},
     {'icon': Iconsax.box, 'label': 'Rentals'},
+    {'icon': Iconsax.message, 'label': 'Chat'},
     {'icon': Iconsax.bag, 'label': 'Items'},
     {'icon': Iconsax.setting_2, 'label': 'Settings'},
   ];
@@ -80,7 +81,7 @@ class _FloatingNavbarState extends State<FloatingNavbar> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     // Dimensions
-    final double collapsedWidth = 220.0;
+    final double collapsedWidth = 280.0;
     final double expandedWidth = screenWidth - 40; // 20px padding on each side
     final double height = _isExpanded ? 75.0 : 60.0;
 
