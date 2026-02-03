@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:near_share/features/home/models/product.dart';
-import 'package:near_share/features/home/services/product_service.dart';
+import 'package:near_share/features/home/services/product_firestore_service.dart';
 import 'package:near_share/features/home/presentation/widgets/product_card.dart';
 import 'package:near_share/features/home/presentation/widgets/category_selector.dart';
 import 'package:near_share/features/home/presentation/pages/product_details_page.dart';
+import 'package:near_share/features/home/presentation/widgets/personalized_header.dart';
+import 'package:near_share/features/home/presentation/widgets/search_bar.dart'
+    as custom;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,11 +18,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final ProductService _productService = ProductService();
-  List<Product> _allProducts = [];
-  List<Product> _filteredProducts = [];
+  final ProductFirestoreService _productService = ProductFirestoreService();
+  final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'All';
-  bool _isLoading = true;
+  String _searchQuery = '';
 
   final List<String> _categories = [
     'All',
@@ -33,31 +35,49 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadProducts();
   }
 
-  Future<void> _loadProducts() async {
-    final products = await _productService.loadProducts();
-    if (mounted) {
-      setState(() {
-        _allProducts = products;
-        _filteredProducts = products;
-        _isLoading = false;
-      });
-    }
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _onCategorySelected(String category) {
     setState(() {
       _selectedCategory = category;
-      if (category == 'All') {
-        _filteredProducts = _allProducts;
-      } else {
-        _filteredProducts = _allProducts
-            .where((p) => p.category.toLowerCase() == category.toLowerCase())
-            .toList();
-      }
     });
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+  }
+
+  List<Product> _applyFilters(List<Product> products) {
+    List<Product> filtered = products;
+
+    // Apply category filter
+    if (_selectedCategory != 'All') {
+      filtered = filtered
+          .where(
+            (p) => p.category.toLowerCase() == _selectedCategory.toLowerCase(),
+          )
+          .toList();
+    }
+
+    // Apply search filter
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((p) {
+        final name = p.name.toLowerCase();
+        final location = (p.location ?? '').toLowerCase();
+        return name.contains(query) || location.contains(query);
+      }).toList();
+    }
+
+    return filtered;
   }
 
   Widget _buildSponsoredSection(String title) {
@@ -111,117 +131,203 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const PersonalizedHeader(),
+        custom.SearchBar(
+          controller: _searchController,
+          onChanged: _onSearchChanged,
+        ),
         CategorySelector(
           categories: _categories,
           selectedCategory: _selectedCategory,
           onCategorySelected: _onCategorySelected,
         ),
         Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _filteredProducts.isEmpty
-              ? const Center(child: Text('No products found in this category'))
-              : RefreshIndicator(
-                  onRefresh: _loadProducts,
-                  color: Colors.black87,
-                  backgroundColor: Colors.white,
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      // Sponsored Section Top
-                      SliverToBoxAdapter(
-                        child: _buildSponsoredSection('Sponsored Items'),
-                      ),
+          child: StreamBuilder<List<Product>>(
+            stream: _productService.streamAllProducts(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return _buildShimmerGrid();
+              }
+              if (snapshot.hasError) {
+                return const Center(
+                  child: Text('Unable to load products right now.'),
+                );
+              }
 
-                      // First 6 products (3 rows)
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        sliver: SliverGrid(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.72,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                              ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ProductDetailsPage(
-                                        product: _filteredProducts[index],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: ProductCard(
-                                  product: _filteredProducts[index],
+              final products = snapshot.data ?? [];
+              final filtered = _applyFilters(products);
+
+              if (products.isEmpty) {
+                return const Center(
+                  child: Text('No gear available in your area yet.'),
+                );
+              }
+
+              if (filtered.isEmpty) {
+                return const Center(
+                  child: Text('No products found in this category'),
+                );
+              }
+
+              return CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _buildSponsoredSection('Sponsored Items'),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailsPage(
+                                    product: filtered[index],
+                                  ),
                                 ),
                               );
                             },
-                            childCount: _filteredProducts.length > 6
-                                ? 6
-                                : _filteredProducts.length,
-                          ),
+                            child: ProductCard(product: filtered[index]),
+                          );
+                        },
+                        childCount: filtered.length > 6 ? 6 : filtered.length,
+                      ),
+                    ),
+                  ),
+                  if (filtered.length > 6)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 24.0),
+                        child: _buildSponsoredSection('Discover More'),
+                      ),
+                    ),
+                  if (filtered.length > 6)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
+                      ),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.72,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductDetailsPage(
+                                      product: filtered[index + 6],
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: ProductCard(
+                                product: filtered[index + 6],
+                              ),
+                            );
+                          },
+                          childCount: filtered.length - 6,
                         ),
                       ),
-
-                      // Middle Sponsored Section
-                      if (_filteredProducts.length > 6)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 24.0),
-                            child: _buildSponsoredSection('Discover More'),
-                          ),
-                        ),
-
-                      // Remaining products
-                      if (_filteredProducts.length > 6)
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 16.0,
-                          ),
-                          sliver: SliverGrid(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  childAspectRatio: 0.72,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                ),
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ProductDetailsPage(
-                                        product: _filteredProducts[index + 6],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: ProductCard(
-                                  product: _filteredProducts[index + 6],
-                                ),
-                              );
-                            }, childCount: _filteredProducts.length - 6),
-                          ),
-                        ),
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                    ],
-                  ),
-                ),
+                    ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                ],
+              );
+            },
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildShimmerGrid() {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: _buildSponsoredSection('Sponsored Items'),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.72,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return _buildSkeletonCard();
+              },
+              childCount: 6,
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 120,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 12,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 10,
+                    width: 120,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

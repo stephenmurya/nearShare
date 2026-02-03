@@ -4,6 +4,7 @@ import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 import 'package:near_share/features/auth/presentation/providers/auth_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 class OTPVerifyPage extends StatefulWidget {
   final String phoneNumber;
@@ -53,30 +54,31 @@ class _OTPVerifyPageState extends State<OTPVerifyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 60,
-      textStyle: GoogleFonts.inter(
+      textStyle: GoogleFonts.interTight(
         fontSize: 22,
         fontWeight: FontWeight.bold,
-        color: Colors.black,
+        color: theme.colorScheme.onSurface,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: theme.colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.transparent),
       ),
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
+          icon: Icon(
+            IconsaxPlusLinear.arrow_left_1,
+            color: theme.colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -89,16 +91,19 @@ class _OTPVerifyPageState extends State<OTPVerifyPage> {
           children: [
             Text(
               'Verify Code',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.interTight(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF00296B),
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'We sent a 4-digit code to ${widget.phoneNumber} via WhatsApp.',
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
+              style: GoogleFonts.interTight(
+                fontSize: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 48),
 
@@ -125,14 +130,16 @@ class _OTPVerifyPageState extends State<OTPVerifyPage> {
                       children: [
                         Text(
                           "Didn't receive code?",
-                          style: GoogleFonts.inter(color: Colors.grey[600]),
+                          style: GoogleFonts.interTight(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         TextButton(
                           onPressed: () {},
                           child: Text(
                             'Resend Code',
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF00296B),
+                            style: GoogleFonts.interTight(
+                              color: theme.colorScheme.onSurface,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:near_share/features/auth/presentation/providers/auth_provider.dart';
 import 'package:near_share/features/auth/presentation/pages/otp_verify_page.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -103,7 +104,7 @@ class _SignUpPageState extends State<SignUpPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: const Icon(IconsaxPlusLinear.arrow_left_1, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),

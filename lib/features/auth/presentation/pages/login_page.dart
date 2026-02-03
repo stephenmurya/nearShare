@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:near_share/features/auth/presentation/providers/auth_provider.dart';
 import 'package:near_share/features/auth/presentation/pages/signup_page.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,13 +47,26 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signInWithEmail(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+      final credential = fb_auth.EmailAuthProvider.credential(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
+      await authProvider.upgradeWithCredential(credential);
       // pop is now handled by the listener for robustness
     } catch (e) {
-      if (mounted) {
+      if (e is fb_auth.FirebaseAuthException &&
+          e.code == 'credential-already-in-use') {
+        final shouldSwitch = await _showSwitchAccountDialog();
+        if (shouldSwitch == true && mounted) {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          await authProvider.signOut();
+          final credential = fb_auth.EmailAuthProvider.credential(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+          await authProvider.signInWithCredential(credential);
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: ${e.toString()}')),
         );
@@ -60,6 +76,41 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<bool?> _showSwitchAccountDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Account already registered',
+            style: GoogleFonts.interTight(),
+          ),
+          content: Text(
+            'This account is already registered. Would you like to switch accounts? '
+            '(Note: Guest data will not be merged).',
+            style: GoogleFonts.interTight(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.interTight(),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Switch',
+                style: GoogleFonts.interTight(),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: const Icon(IconsaxPlusLinear.arrow_left_1, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),

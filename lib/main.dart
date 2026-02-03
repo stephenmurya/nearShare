@@ -7,6 +7,9 @@ import 'package:near_share/core/theme/app_theme.dart';
 import 'package:near_share/features/auth/presentation/providers/auth_provider.dart';
 import 'package:near_share/features/auth/presentation/pages/auth_wrapper.dart';
 
+import 'package:near_share/features/home/presentation/providers/favorites_provider.dart';
+import 'package:near_share/features/home/presentation/providers/product_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -27,7 +30,21 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, FavoritesProvider>(
+          create: (_) => FavoritesProvider(),
+          update: (_, authProvider, favoritesProvider) {
+            final provider = favoritesProvider ?? FavoritesProvider();
+            provider.updateAuth(
+              userId: authProvider.user?.uid,
+              isGuest: authProvider.isGuest,
+            );
+            return provider;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+      ],
       child: MaterialApp(
         title: 'Near Share',
         debugShowCheckedModeBanner: false,

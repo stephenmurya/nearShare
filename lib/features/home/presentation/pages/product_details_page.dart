@@ -4,6 +4,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:provider/provider.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:near_share/features/home/presentation/providers/favorites_provider.dart';
+import 'package:near_share/features/home/presentation/pages/lister_profile_page.dart';
 import 'package:near_share/features/home/models/product.dart';
 
 class ProductDetailsPage extends StatefulWidget {
@@ -22,6 +28,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final formatter = NumberFormat('#,###');
+    final favoritesProvider = Provider.of<FavoritesProvider>(context);
+    final isFavorite = favoritesProvider.isFavorite(widget.product.id);
+
     final images =
         (widget.product.images != null && widget.product.images!.isNotEmpty)
         ? widget.product.images!
@@ -39,15 +48,36 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               margin: const EdgeInsets.only(left: 16), // Force 16px from edge
               child: CircleAvatar(
                 backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.5),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                  color: theme.colorScheme.onSurface,
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero, // Remove default padding
+                  child: IconButton(
+                    icon: const Icon(IconsaxPlusLinear.arrow_left_1, size: 18),
+                    color: theme.colorScheme.onSurface,
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero, // Remove default padding
+                  ),
                 ),
-              ),
             ),
             actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                child: CircleAvatar(
+                  backgroundColor: theme.scaffoldBackgroundColor.withOpacity(
+                    0.5,
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Iconsax.export_1,
+                      size: 20,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    onPressed: () {
+                      Share.share(
+                        'Check out this ${widget.product.name} for rent on Near Share! Only ₦${formatter.format(widget.product.price)}/day.',
+                      );
+                    },
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
               Container(
                 margin: const EdgeInsets.only(
                   right: 16,
@@ -57,9 +87,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     0.5,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.favorite_border, size: 20),
-                    color: theme.colorScheme.onSurface,
-                    onPressed: () {},
+                    icon: Icon(
+                      isFavorite ? Iconsax.heart5 : Iconsax.heart,
+                      size: 20,
+                      color: isFavorite
+                          ? Colors.red
+                          : theme.colorScheme.onSurface,
+                    ),
+                    onPressed: () =>
+                        favoritesProvider.toggleFavorite(widget.product.id),
                     padding: EdgeInsets.zero,
                   ),
                 ),
@@ -95,7 +131,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       });
                     },
                     itemBuilder: (context, index) {
-                      return CachedNetworkImage(
+                      final imageWidget = CachedNetworkImage(
                         imageUrl: images[index],
                         fit: BoxFit.contain, // Ensure full image fits
                         placeholder: (context, url) => Shimmer.fromColors(
@@ -104,8 +140,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           child: Container(color: Colors.white),
                         ),
                         errorWidget: (context, url, error) =>
-                            const Icon(Icons.error),
+                            const Icon(IconsaxPlusLinear.warning_2),
                       );
+                      if (index == 0) {
+                        return Hero(
+                          tag: 'product-image-${widget.product.id}-0',
+                          child: imageWidget,
+                        );
+                      }
+                      return imageWidget;
                     },
                   ),
 
@@ -190,7 +233,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.location_on_outlined,
+                                  IconsaxPlusLinear.location,
                                   color: theme.colorScheme.onSurfaceVariant,
                                   size: 14,
                                 ),
@@ -224,6 +267,96 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+
+                  // Lister Card
+                  if (widget.product.postedBy != null) ...[
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ListerProfilePage(
+                              listerName: widget.product.postedBy!,
+                              profilePic: widget.product.userProfilePic,
+                              rating: widget.product.userRating,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: theme.colorScheme.outlineVariant.withOpacity(
+                              0.5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundImage:
+                                  widget.product.userProfilePic != null
+                                  ? NetworkImage(widget.product.userProfilePic!)
+                                  : null,
+                              child: widget.product.userProfilePic == null
+                                  ? const Icon(Iconsax.user, size: 20)
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.product.postedBy!,
+                                    style: GoogleFonts.interTight(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Lister',
+                                    style: GoogleFonts.interTight(
+                                      fontSize: 12,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (widget.product.userRating != null) ...[
+                              const Icon(
+                                Iconsax.star1,
+                                size: 16,
+                                color: Colors.amber,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${widget.product.userRating} (12)',
+                                style: GoogleFonts.interTight(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(width: 8),
+                            Icon(
+                              IconsaxPlusLinear.arrow_right_3,
+                              size: 20,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 24),
 

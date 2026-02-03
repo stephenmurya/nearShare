@@ -65,8 +65,24 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<UserCredential?> signInWithGoogle() async {
-    return await _authService.signInWithGoogle();
+  Future<AuthCredential?> getGoogleCredential() async {
+    return await _authService.getGoogleCredential();
+  }
+
+  Future<UserCredential?> upgradeWithCredential(
+    AuthCredential credential,
+  ) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null && currentUser.isAnonymous) {
+      return await _authService.linkWithCredential(credential);
+    }
+    return await _authService.signInWithCredential(credential);
+  }
+
+  Future<UserCredential?> signInWithCredential(
+    AuthCredential credential,
+  ) async {
+    return await _authService.signInWithCredential(credential);
   }
 
   Future<UserCredential?> signInWithEmail(String email, String password) async {

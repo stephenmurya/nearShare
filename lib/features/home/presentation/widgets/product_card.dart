@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:near_share/features/home/models/product.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -34,26 +35,29 @@ class ProductCard extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: Stack(
               children: [
-                CachedNetworkImage(
-                  imageUrl: product.image,
-                  height: 120, // Adjusted for 16:9 feel in grid
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      height: 120,
-                      width: double.infinity,
-                      color: Colors.white,
+                Hero(
+                  tag: 'product-image-${product.id}-0',
+                  child: CachedNetworkImage(
+                    imageUrl: product.image,
+                    height: 120, // Adjusted for 16:9 feel in grid
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Container(
+                        height: 120,
+                        width: double.infinity,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
                   errorWidget: (context, url, error) => Container(
                     height: 120,
                     width: double.infinity,
                     color: Colors.grey[200],
-                    child: const Icon(Icons.error),
+                    child: const Icon(IconsaxPlusLinear.warning_2),
                   ),
+                ),
                 ),
                 Positioned(
                   top: 8,
@@ -100,7 +104,7 @@ class ProductCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.location_on_outlined,
+                      IconsaxPlusLinear.location,
                       size: 12,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

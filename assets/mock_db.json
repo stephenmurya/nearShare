@@ -18,7 +18,10 @@
                 "Power Source": "Electric",
                 "Weight": "120 kg",
                 "Voltage": "220V"
-            }
+            },
+            "postedBy": "Mike Construction",
+            "userRating": 4.5,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/85.jpg"
         },
         {
             "id": "2",
@@ -38,7 +41,10 @@
                 "Bluetooth": "Yes",
                 "Weight": "34.7 kg",
                 "Battery": "No (AC Only)"
-            }
+            },
+            "postedBy": "Jane Smith",
+            "userRating": 4.9,
+            "userProfilePic": "https://randomuser.me/api/portraits/women/44.jpg"
         },
         {
             "id": "3",
@@ -58,7 +64,10 @@
                 "Resolution": "12.1 MP",
                 "Video": "4K 120p",
                 "Mount": "E-mount"
-            }
+            },
+            "postedBy": "John Doe",
+            "userRating": 4.8,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/32.jpg"
         },
         {
             "id": "4",
@@ -78,7 +87,10 @@
                 "Fuel": "Petrol",
                 "Noise Level": "52 dBA",
                 "Weight": "21 kg"
-            }
+            },
+            "postedBy": "Mike Construction",
+            "userRating": 4.5,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/85.jpg"
         },
         {
             "id": "5",
@@ -98,7 +110,10 @@
                 "Min Height": "3.5 in",
                 "Max Height": "18 in",
                 "Material": "Steel"
-            }
+            },
+            "postedBy": "John Doe",
+            "userRating": 4.8,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/32.jpg"
         },
         {
             "id": "6",
@@ -118,7 +133,10 @@
                 "Impact Rate": "1400 BPM",
                 "Weight": "15 kg",
                 "Chuck": "Hex"
-            }
+            },
+            "postedBy": "Mike Construction",
+            "userRating": 4.5,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/85.jpg"
         },
         {
             "id": "7",
@@ -138,7 +156,10 @@
                 "Jog Wheels": "Full Size",
                 "Inputs": "2 Mic",
                 "Software": "Serato/Rekordbox"
-            }
+            },
+            "postedBy": "Jane Smith",
+            "userRating": 4.9,
+            "userProfilePic": "https://randomuser.me/api/portraits/women/44.jpg"
         },
         {
             "id": "8",
@@ -158,7 +179,10 @@
                 "Battery Life": "12 Hours",
                 "Weight": "1.3 kg",
                 "Connectivity": "Bluetooth 5.0"
-            }
+            },
+            "postedBy": "John Doe",
+            "userRating": 4.8,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/32.jpg"
         },
         {
             "id": "9",
@@ -178,7 +202,10 @@
                 "Output": "2400W AC",
                 "Solar Input": "Max 800W",
                 "Weight": "25 kg"
-            }
+            },
+            "postedBy": "Mike Construction",
+            "userRating": 4.5,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/85.jpg"
         },
         {
             "id": "10",
@@ -198,7 +225,10 @@
                 "Pressure": "10 Bar",
                 "Power": "2.5 HP",
                 "Flow": "250 L/min"
-            }
+            },
+            "postedBy": "John Doe",
+            "userRating": 4.8,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/32.jpg"
         },
         {
             "id": "11",
@@ -218,7 +248,10 @@
                 "Plate Size": "500x400mm",
                 "Engine": "Petrol 5.5HP",
                 "Weight": "90 kg"
-            }
+            },
+            "postedBy": "Mike Construction",
+            "userRating": 4.5,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/85.jpg"
         },
         {
             "id": "12",
@@ -238,7 +271,10 @@
                 "Channels": "Dual",
                 "Freq": "UHF",
                 "Battery": "AA x 2"
-            }
+            },
+            "postedBy": "Jane Smith",
+            "userRating": 4.9,
+            "userProfilePic": "https://randomuser.me/api/portraits/women/44.jpg"
         },
         {
             "id": "13",
@@ -258,7 +294,10 @@
                 "CRI": "96+",
                 "Mount": "Bowens",
                 "Control": "Sidus Link App"
-            }
+            },
+            "postedBy": "John Doe",
+            "userRating": 4.8,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/32.jpg"
         },
         {
             "id": "14",
@@ -278,7 +317,10 @@
                 "Flow Rate": "60 m3/h",
                 "Lift": "28m",
                 "Fuel": "Diesel"
-            }
+            },
+            "postedBy": "Mike Construction",
+            "userRating": 4.5,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/85.jpg"
         },
         {
             "id": "15",
@@ -298,7 +340,10 @@
                 "Fork Length": "1150 mm",
                 "Width": "540 mm",
                 "Wheels": "Nylon"
-            }
+            },
+            "postedBy": "John Doe",
+            "userRating": 4.8,
+            "userProfilePic": "https://randomuser.me/api/portraits/men/32.jpg"
         }
     ]
 }

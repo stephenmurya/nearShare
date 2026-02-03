@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:near_share/features/auth/presentation/providers/auth_provider.dart';
 import 'package:near_share/features/auth/presentation/pages/login_page.dart';
 import 'package:near_share/features/auth/presentation/pages/phone_input_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -16,6 +17,41 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   bool _isLoadingGoogle = false;
   bool _isLoadingGuest = false;
+
+  Future<bool?> _showSwitchAccountDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Account already registered',
+            style: GoogleFonts.interTight(),
+          ),
+          content: Text(
+            'This account is already registered. Would you like to switch accounts? '
+            '(Note: Guest data will not be merged).',
+            style: GoogleFonts.interTight(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.interTight(),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Switch',
+                style: GoogleFonts.interTight(),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +86,18 @@ class _LandingPageState extends State<LandingPage> {
                     : () async {
                         setState(() => _isLoadingGoogle = true);
                         try {
-                          final credential = await authProvider
-                              .signInWithGoogle();
-                          if (credential != null && mounted) {
-                            if (credential.additionalUserInfo?.isNewUser ??
+                          final authCredential =
+                              await authProvider.getGoogleCredential();
+                          if (authCredential == null) {
+                            setState(() => _isLoadingGoogle = false);
+                            return;
+                          }
+                          final userCredential =
+                              await authProvider.upgradeWithCredential(
+                            authCredential,
+                          );
+                          if (userCredential != null && mounted) {
+                            if (userCredential.additionalUserInfo?.isNewUser ??
                                 false) {
                               Navigator.push(
                                 context,
@@ -64,6 +108,21 @@ class _LandingPageState extends State<LandingPage> {
                             }
                           }
                         } on FirebaseAuthException catch (e) {
+                          if (e.code == 'credential-already-in-use') {
+                            final shouldSwitch =
+                                await _showSwitchAccountDialog();
+                            if (shouldSwitch == true && mounted) {
+                              await authProvider.signOut();
+                              final authCredential =
+                                  await authProvider.getGoogleCredential();
+                              if (authCredential != null) {
+                                await authProvider.signInWithCredential(
+                                  authCredential,
+                                );
+                              }
+                            }
+                            return;
+                          }
                           if (mounted) {
                             String message = 'Google Sign-In failed';
                             if (e.code ==
@@ -106,7 +165,7 @@ class _LandingPageState extends State<LandingPage> {
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
-                          FaIcon(FontAwesomeIcons.google, size: 20),
+                          Icon(IconsaxPlusLinear.global, size: 20),
                           SizedBox(width: 12),
                           Text('Continue with Google'),
                         ],
@@ -134,7 +193,7 @@ class _LandingPageState extends State<LandingPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _socialIconButton(FontAwesomeIcons.phone, () {
+                  _socialIconButton(IconsaxPlusLinear.call, () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -143,7 +202,7 @@ class _LandingPageState extends State<LandingPage> {
                     );
                   }),
                   const SizedBox(width: 20),
-                  _socialIconButton(FontAwesomeIcons.apple, () {}),
+                  _socialIconButton(IconsaxPlusLinear.mobile, () {}),
                 ],
               ),
               const SizedBox(height: 32),
@@ -190,7 +249,7 @@ class _LandingPageState extends State<LandingPage> {
           color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: FaIcon(icon, size: 24, color: Colors.black),
+        child: Icon(icon, size: 24, color: Colors.black),
       ),
     );
   }

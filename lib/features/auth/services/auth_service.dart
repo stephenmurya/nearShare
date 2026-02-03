@@ -22,8 +22,8 @@ class AuthService {
     }
   }
 
-  // Sign in with Google
-  Future<UserCredential?> signInWithGoogle() async {
+  // Build Google AuthCredential
+  Future<AuthCredential?> getGoogleCredential() async {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
 
@@ -38,7 +38,21 @@ class AuthService {
       idToken: googleAuth.idToken,
     );
 
+    return credential;
+  }
+
+  // Sign in with credential (non-guest flows)
+  Future<UserCredential?> signInWithCredential(
+    AuthCredential credential,
+  ) async {
     return await _auth.signInWithCredential(credential);
+  }
+
+  // Link credential to anonymous user
+  Future<UserCredential?> linkWithCredential(
+    AuthCredential credential,
+  ) async {
+    return await _auth.currentUser?.linkWithCredential(credential);
   }
 
   // Sign in with Email and Password
