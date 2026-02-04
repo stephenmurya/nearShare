@@ -11,6 +11,8 @@ import 'package:near_share/features/auth/presentation/providers/auth_provider.da
 import 'package:near_share/features/auth/presentation/widgets/auth_guard_sheet.dart';
 import 'package:near_share/features/home/models/product.dart';
 import 'package:near_share/features/home/services/product_firestore_service.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class ProductFormPage extends StatefulWidget {
   final Product? product;
@@ -43,6 +45,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
   final _locationController = TextEditingController();
   final _imagePicker = ImagePicker();
   final _service = ProductFirestoreService();
+  static const int _maxImages = 9;
+  static const int _maxImageBytes = 10 * 1024 * 1024;
 
   final List<String> _categories = [
     'Construction',
@@ -53,6 +57,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
   ];
 
   String _selectedCategory = 'Construction';
+  String _selectedPeriod = 'Day';
+  final List<String> _periods = ['Hour', 'Day', 'Week', 'Month'];
   final List<String> _existingImageUrls = [];
   final List<XFile> _newImages = [];
   final List<_SpecPair> _specs = [];
@@ -116,11 +122,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
   Future<void> _pickFromGallery() async {
     final images = await _imagePicker.pickMultiImage(imageQuality: 85);
-    if (images.isNotEmpty) {
-      setState(() {
-        _newImages.addAll(images);
-      });
-    }
+    if (images.isEmpty) return;
+    await _addImagesWithChecks(images);
   }
 
   Future<void> _pickFromCamera() async {
@@ -128,11 +131,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
       source: ImageSource.camera,
       imageQuality: 85,
     );
-    if (image != null) {
-      setState(() {
-        _newImages.add(image);
-      });
-    }
+    if (image == null) return;
+    await _addImagesWithChecks([image]);
   }
 
   void _removeExistingImage(String url) {
@@ -145,6 +145,38 @@ class _ProductFormPageState extends State<ProductFormPage> {
     setState(() {
       _newImages.remove(file);
     });
+  }
+
+  Future<void> _addImagesWithChecks(List<XFile> incoming) async {
+    final totalExisting = _existingImageUrls.length + _newImages.length;
+    final availableSlots = _maxImages - totalExisting;
+    if (availableSlots <= 0) {
+      _showToastWithMessenger(
+        ScaffoldMessenger.of(context),
+        'You can add up to $_maxImages images.',
+      );
+      return;
+    }
+
+    final selected = incoming.take(availableSlots).toList();
+    final filtered = <XFile>[];
+    for (final image in selected) {
+      final size = await image.length();
+      if (size > _maxImageBytes) {
+        _showToastWithMessenger(
+          ScaffoldMessenger.of(context),
+          'Image too large (max 10MB).',
+        );
+        continue;
+      }
+      filtered.add(image);
+    }
+
+    if (filtered.isNotEmpty) {
+      setState(() {
+        _newImages.addAll(filtered);
+      });
+    }
   }
 
   Future<void> _saveProduct() async {
@@ -170,58 +202,114 @@ class _ProductFormPageState extends State<ProductFormPage> {
       return;
     }
 
-    setState(() {
-      _isSaving = true;
-    });
-
-    final uploadedUrls = <String>[];
-    for (final image in _newImages) {
-      final url = await _service.uploadProductImage(
-        userId: user.uid,
-        file: image,
-      );
-      uploadedUrls.add(url);
+    final shouldPopImmediately = widget.product == null;
+    final messenger = ScaffoldMessenger.of(context);
+    if (!shouldPopImmediately) {
+      setState(() {
+        _isSaving = true;
+      });
     }
 
-    final allImages = [..._existingImageUrls, ...uploadedUrls];
-    final specs = <String, dynamic>{};
-    for (final spec in _specs) {
-      final key = spec.keyController.text.trim();
-      final value = spec.valueController.text.trim();
-      if (key.isNotEmpty && value.isNotEmpty) {
-        specs[key] = value;
+    try {
+      if (shouldPopImmediately && mounted) {
+        Navigator.pop(context, 'creating');
       }
-    }
+      final uploadedUrls = <String>[];
+      for (final image in _newImages) {
+        final url = await _retry(
+          () => _service
+              .uploadProductImage(
+                userId: user.uid,
+                file: image,
+              )
+              .timeout(const Duration(seconds: 30)),
+          onRetry: (attempt, error) {
+            _showToastWithMessenger(
+              messenger,
+              'Retrying upload ($attempt/2)...',
+            );
+          },
+        );
+        uploadedUrls.add(url);
+      }
 
-    final priceValue =
-        double.tryParse(_priceController.text.trim()) ?? 0.0;
+      final allImages = [..._existingImageUrls, ...uploadedUrls];
+      final specs = <String, dynamic>{};
+      for (final spec in _specs) {
+        final key = spec.keyController.text.trim();
+        final value = spec.valueController.text.trim();
+        if (key.isNotEmpty && value.isNotEmpty) {
+          specs[key] = value;
+        }
+      }
 
-    final product = Product(
-      id: widget.product?.id ?? '',
-      name: _nameController.text.trim(),
-      category: _selectedCategory,
-      price: priceValue,
-      image: allImages.first,
-      images: allImages,
-      description: _descriptionController.text.trim(),
-      location: _locationController.text.trim().isEmpty
-          ? null
-          : _locationController.text.trim(),
-      specs: specs.isEmpty ? null : specs,
-      postedBy: user.uid,
-      userRating: widget.product?.userRating,
-      userProfilePic: user.photoURL,
-      createdAt: widget.product?.createdAt,
-    );
+      final priceValue = _parsePrice(_priceController.text.trim());
 
-    if (widget.product == null) {
-      await _service.addProduct(product);
-    } else {
-      await _service.updateProduct(widget.product!.id, product);
-    }
+      final displayName =
+          user.displayName?.trim().isNotEmpty == true ? user.displayName : null;
+      final product = Product(
+        id: widget.product?.id ?? '',
+        name: _nameController.text.trim(),
+        category: _selectedCategory,
+        price: priceValue,
+        image: allImages.first,
+        images: allImages,
+        description: _descriptionController.text.trim(),
+        location: _locationController.text.trim().isEmpty
+            ? null
+            : _locationController.text.trim(),
+        specs: specs.isEmpty ? null : specs,
+        postedBy: user.uid,
+        postedByName: displayName ?? user.email ?? user.uid,
+        userRating: widget.product?.userRating,
+        userProfilePic: user.photoURL,
+        createdAt: widget.product?.createdAt,
+        isActive: widget.product?.isActive ?? true,
+      );
 
-    if (mounted) {
-      Navigator.pop(context);
+      if (widget.product == null) {
+        await _retry(
+          () => _service.addProduct(product),
+          onRetry: (attempt, error) {
+            _showToastWithMessenger(
+              messenger,
+              'Retrying save ($attempt/2)...',
+            );
+          },
+        );
+      } else {
+        await _retry(
+          () => _service.updateProduct(widget.product!.id, product),
+          onRetry: (attempt, error) {
+            _showToastWithMessenger(
+              messenger,
+              'Retrying save ($attempt/2)...',
+            );
+          },
+        );
+      }
+
+      if (!shouldPopImmediately && mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      debugPrint('Save product failed: $e');
+      if (!shouldPopImmediately && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to save product: $e',
+              style: GoogleFonts.interTight(),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (!shouldPopImmediately && mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
@@ -258,6 +346,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
               theme: theme,
               controller: _nameController,
               label: 'Title',
+              textCapitalization: TextCapitalization.sentences,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Title is required';
@@ -268,24 +357,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
             const SizedBox(height: 16),
             _buildCategory(theme),
             const SizedBox(height: 16),
-            _buildTextField(
-              theme: theme,
-              controller: _priceController,
-              label: 'Price',
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Price is required';
-                }
-                final parsed = double.tryParse(value.trim());
-                if (parsed == null || parsed <= 0) {
-                  return 'Enter a valid price';
-                }
-                return null;
-              },
-            ),
+            _buildPriceRow(theme),
             const SizedBox(height: 16),
             _buildTextField(
               theme: theme,
@@ -297,6 +369,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
               theme: theme,
               controller: _descriptionController,
               label: 'Description',
+              textCapitalization: TextCapitalization.sentences,
               maxLines: 4,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -374,12 +447,28 @@ class _ProductFormPageState extends State<ProductFormPage> {
           ),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            ..._existingImageUrls.map(
-              (url) => _buildImageTile(
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1,
+          ),
+          itemCount: (_existingImageUrls.length + _newImages.length) <
+                  _maxImages
+              ? _existingImageUrls.length + _newImages.length + 1
+              : _existingImageUrls.length + _newImages.length,
+          itemBuilder: (context, index) {
+            final totalImages = _existingImageUrls.length + _newImages.length;
+            final canAdd = totalImages < _maxImages;
+            if (canAdd && index == totalImages) {
+              return _buildAddImageTile(theme);
+            }
+            if (index < _existingImageUrls.length) {
+              final url = _existingImageUrls[index];
+              return _buildImageTile(
                 theme: theme,
                 child: heroImage == url && widget.product != null
                     ? Hero(
@@ -394,22 +483,21 @@ class _ProductFormPageState extends State<ProductFormPage> {
                         fit: BoxFit.cover,
                       ),
                 onRemove: () => _removeExistingImage(url),
-              ),
-            ),
-            ..._newImages.map(
-              (file) => _buildImageTile(
-                theme: theme,
-                child: kIsWeb
-                    ? Image.network(file.path, fit: BoxFit.cover)
-                    : Image.file(
-                        File(file.path),
-                        fit: BoxFit.cover,
-                      ),
-                onRemove: () => _removeNewImage(file),
-              ),
-            ),
-            _buildAddImageTile(theme),
-          ],
+              );
+            }
+            final newIndex = index - _existingImageUrls.length;
+            final file = _newImages[newIndex];
+            return _buildImageTile(
+              theme: theme,
+              child: kIsWeb
+                  ? Image.network(file.path, fit: BoxFit.cover)
+                  : Image.file(
+                      File(file.path),
+                      fit: BoxFit.cover,
+                    ),
+              onRemove: () => _removeNewImage(file),
+            );
+          },
         ),
         const SizedBox(height: 12),
         Row(
@@ -487,7 +575,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
-                IconsaxPlusLinear.close_circle,
+                IconsaxPlusLinear.trash,
                 size: 12,
                 color: Colors.white,
               ),
@@ -508,6 +596,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
               theme: theme,
               controller: spec.keyController,
               label: 'Key',
+              textCapitalization: TextCapitalization.sentences,
             ),
           ),
           const SizedBox(width: 12),
@@ -516,6 +605,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
               theme: theme,
               controller: spec.valueController,
               label: 'Value',
+              textCapitalization: TextCapitalization.sentences,
             ),
           ),
           const SizedBox(width: 8),
@@ -534,27 +624,27 @@ class _ProductFormPageState extends State<ProductFormPage> {
   }
 
   Widget _buildCategory(ThemeData theme) {
-    return DropdownButtonFormField<String>(
-      value: _selectedCategory,
-      decoration: _inputDecoration(theme, 'Category'),
-      items: _categories
-          .map(
-            (category) => DropdownMenuItem(
-              value: category,
-              child: Text(
-                category,
-                style: GoogleFonts.interTight(),
-              ),
-            ),
-          )
-          .toList(),
-      onChanged: (value) {
-        if (value != null) {
-          setState(() {
-            _selectedCategory = value;
-          });
-        }
-      },
+    return _buildLabeledField(
+      theme: theme,
+      label: 'Category',
+      child: _SelectionField(
+        label: 'Category',
+        value: _selectedCategory,
+        onTap: () async {
+          final selected = await _showSelectionSheet(
+            theme: theme,
+            title: 'Select Category',
+            options: _categories,
+            iconBuilder: (value) => IconsaxPlusLinear.tag,
+            selectedValue: _selectedCategory,
+          );
+          if (selected != null) {
+            setState(() {
+              _selectedCategory = selected;
+            });
+          }
+        },
+      ),
     );
   }
 
@@ -565,25 +655,338 @@ class _ProductFormPageState extends State<ProductFormPage> {
     int maxLines = 1,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: GoogleFonts.interTight(
-        color: theme.colorScheme.onSurface,
+    return _buildLabeledField(
+      theme: theme,
+      label: label,
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator: validator,
+        textCapitalization: textCapitalization,
+        style: GoogleFonts.interTight(color: theme.colorScheme.onSurface),
+        decoration: _inputDecoration(theme, 'Enter $label'),
       ),
-      decoration: _inputDecoration(theme, label),
     );
   }
 
   InputDecoration _inputDecoration(ThemeData theme, String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: GoogleFonts.interTight(
-        color: theme.colorScheme.onSurfaceVariant,
+    return InputDecoration(hintText: label);
+  }
+
+  Widget _buildPriceRow(ThemeData theme) {
+    return _buildLabeledField(
+      theme: theme,
+      label: 'Price',
+      child: Row(
+        children: [
+          Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: _selectionDecoration(theme),
+            child: Row(
+              children: [
+                Text(
+                  'NGN 🇳🇬',
+                  style: GoogleFonts.interTight(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextFormField(
+              controller: _priceController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [_ThousandsSeparatorInputFormatter()],
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Price is required';
+                }
+                final parsed = _parsePrice(value.trim());
+                if (parsed <= 0) {
+                  return 'Enter a valid price';
+                }
+                return null;
+              },
+              style: GoogleFonts.interTight(
+                color: theme.colorScheme.onSurface,
+              ),
+              decoration: _inputDecoration(theme, 'Enter Price'),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _SelectionField(
+            label: 'Period',
+            value: _selectedPeriod,
+            width: 120,
+            onTap: () async {
+              final selected = await _showSelectionSheet(
+                theme: theme,
+                title: 'Select Period',
+                options: _periods,
+                selectedValue: _selectedPeriod,
+                iconBuilder: (value) {
+                  switch (value) {
+                    case 'Hour':
+                      return IconsaxPlusLinear.clock;
+                    case 'Week':
+                      return IconsaxPlusLinear.calendar_2;
+                    case 'Month':
+                      return IconsaxPlusLinear.calendar;
+                    default:
+                      return IconsaxPlusLinear.calendar_1;
+                  }
+                },
+              );
+              if (selected != null) {
+                setState(() {
+                  _selectedPeriod = selected;
+                });
+              }
+            },
+          ),
+        ],
       ),
+    );
+  }
+
+  BoxDecoration _selectionDecoration(ThemeData theme) {
+    final fillColor =
+        theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surface;
+    return BoxDecoration(
+      color: fillColor,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: theme.colorScheme.outlineVariant.withOpacity(0.6),
+      ),
+    );
+  }
+
+  Future<String?> _showSelectionSheet({
+    required ThemeData theme,
+    required String title,
+    required List<String> options,
+    required IconData Function(String value) iconBuilder,
+    String? selectedValue,
+  }) async {
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: false,
+      shape: theme.bottomSheetTheme.shape,
+      backgroundColor: theme.bottomSheetTheme.backgroundColor,
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 48,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    title,
+                    style: GoogleFonts.interTight(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...options.map((value) {
+                  return Column(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context, value),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                iconBuilder(value),
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  value,
+                                  style: GoogleFonts.interTight(
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              Radio<String>(
+                                value: value,
+                                groupValue: selectedValue,
+                                onChanged: (_) =>
+                                    Navigator.pop(context, value),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Divider(
+                        height: 1,
+                        color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  double _parsePrice(String raw) {
+    final cleaned = raw.replaceAll(',', '');
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+
+  Future<T> _retry<T>(
+    Future<T> Function() task, {
+    int maxRetries = 2,
+    void Function(int attempt, Object error)? onRetry,
+  }) async {
+    var attempt = 0;
+    while (true) {
+      try {
+        return await task();
+      } catch (e) {
+        if (attempt >= maxRetries) rethrow;
+        attempt += 1;
+        onRetry?.call(attempt, e);
+      }
+    }
+  }
+
+  void _showToastWithMessenger(
+    ScaffoldMessengerState messenger,
+    String message,
+  ) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.interTight(),
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  Widget _buildLabeledField({
+    required ThemeData theme,
+    required String label,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+}
+
+class _SelectionField extends StatelessWidget {
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+  final double? width;
+
+  const _SelectionField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: width,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: theme.inputDecorationTheme.fillColor ??
+                theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withOpacity(0.6),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  style: GoogleFonts.interTight(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                IconsaxPlusLinear.arrow_down,
+                color: theme.colorScheme.onSurfaceVariant,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final raw = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (raw.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+    final value = int.parse(raw);
+    final formatted = NumberFormat.decimalPattern().format(value);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

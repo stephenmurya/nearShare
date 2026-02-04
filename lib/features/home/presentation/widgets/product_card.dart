@@ -7,8 +7,13 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
+  final bool showStatus;
 
-  const ProductCard({super.key, required this.product});
+  const ProductCard({
+    super.key,
+    required this.product,
+    this.showStatus = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -138,11 +143,42 @@ class ProductCard extends StatelessWidget {
                     Text('/ day', style: theme.textTheme.bodySmall),
                   ],
                 ),
+                if (showStatus) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _StatusDot(isActive: product.isActive),
+                      const SizedBox(width: 6),
+                      Text(
+                        product.isActive ? 'Active' : 'Disabled',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StatusDot extends StatelessWidget {
+  final bool isActive;
+
+  const _StatusDot({required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? Colors.green : Colors.grey;
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

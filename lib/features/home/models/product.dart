@@ -11,9 +11,11 @@ class Product {
   final Map<String, dynamic>? specs;
   final List<String>? images;
   final String? postedBy;
+  final String? postedByName;
   final double? userRating;
   final String? userProfilePic;
   final Timestamp? createdAt;
+  final bool isActive;
 
   Product({
     required this.id,
@@ -26,9 +28,11 @@ class Product {
     this.specs,
     this.images,
     this.postedBy,
+    this.postedByName,
     this.userRating,
     this.userProfilePic,
     this.createdAt,
+    this.isActive = true,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -52,8 +56,10 @@ class Product {
           : null,
       images: parsedImages,
       postedBy: json['postedBy'],
+      postedByName: json['postedByName'],
       userRating: (json['userRating'] as num?)?.toDouble(),
       userProfilePic: json['userProfilePic'],
+      isActive: json['isActive'] == null ? true : json['isActive'] as bool,
     );
   }
 
@@ -79,9 +85,11 @@ class Product {
       specs: specsRaw is Map ? Map<String, dynamic>.from(specsRaw) : null,
       images: images.isNotEmpty ? images : [primaryImage],
       postedBy: data['postedBy']?.toString(),
+      postedByName: data['postedByName']?.toString(),
       userRating: (data['userRating'] as num?)?.toDouble(),
       userProfilePic: data['userProfilePic']?.toString(),
       createdAt: data['createdAt'] as Timestamp?,
+      isActive: data['isActive'] == null ? true : data['isActive'] as bool,
     );
   }
 
@@ -97,8 +105,10 @@ class Product {
       'specs': specs,
       'images': images,
       'postedBy': postedBy,
+      'postedByName': postedByName,
       'userRating': userRating,
       'userProfilePic': userProfilePic,
+      'isActive': isActive,
     };
   }
 
@@ -113,8 +123,10 @@ class Product {
       'location': location,
       'specs': specs,
       'postedBy': postedBy,
+      'postedByName': postedByName,
       'userRating': userRating,
       'userProfilePic': userProfilePic,
+      'isActive': isActive,
     };
   }
 }

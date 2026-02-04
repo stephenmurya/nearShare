@@ -50,6 +50,10 @@ class ProductFirestoreService {
     await _products.doc(id).update(data);
   }
 
+  Future<void> updateProductStatus(String id, bool isActive) async {
+    await _products.doc(id).update({'isActive': isActive});
+  }
+
   Future<void> deleteProduct(String id) async {
     await _products.doc(id).delete();
   }

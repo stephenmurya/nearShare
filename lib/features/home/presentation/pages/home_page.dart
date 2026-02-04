@@ -43,6 +43,10 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  Future<void> _refresh() async {
+    setState(() {});
+  }
+
   void _onCategorySelected(String category) {
     setState(() {
       _selectedCategory = category;
@@ -56,7 +60,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Product> _applyFilters(List<Product> products) {
-    List<Product> filtered = products;
+    List<Product> filtered = products.where((p) => p.isActive).toList();
 
     // Apply category filter
     if (_selectedCategory != 'All') {
@@ -169,55 +173,16 @@ class _HomePageState extends State<HomePage> {
                 );
               }
 
-              return CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: _buildSponsoredSection('Sponsored Items'),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.72,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProductDetailsPage(
-                                    product: filtered[index],
-                                  ),
-                                ),
-                              );
-                            },
-                            child: ProductCard(product: filtered[index]),
-                          );
-                        },
-                        childCount: filtered.length > 6 ? 6 : filtered.length,
-                      ),
-                    ),
-                  ),
-                  if (filtered.length > 6)
+              return RefreshIndicator(
+                onRefresh: _refresh,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
                     SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 24.0),
-                        child: _buildSponsoredSection('Discover More'),
-                      ),
+                      child: _buildSponsoredSection('Sponsored Items'),
                     ),
-                  if (filtered.length > 6)
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 16.0,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       sliver: SliverGrid(
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
@@ -234,22 +199,64 @@ class _HomePageState extends State<HomePage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => ProductDetailsPage(
-                                      product: filtered[index + 6],
+                                      product: filtered[index],
                                     ),
                                   ),
                                 );
                               },
-                              child: ProductCard(
-                                product: filtered[index + 6],
-                              ),
+                              child: ProductCard(product: filtered[index]),
                             );
                           },
-                          childCount: filtered.length - 6,
+                          childCount: filtered.length > 6 ? 6 : filtered.length,
                         ),
                       ),
                     ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                ],
+                    if (filtered.length > 6)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 24.0),
+                          child: _buildSponsoredSection('Discover More'),
+                        ),
+                      ),
+                    if (filtered.length > 6)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 16.0,
+                        ),
+                        sliver: SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.72,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProductDetailsPage(
+                                        product: filtered[index + 6],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: ProductCard(
+                                  product: filtered[index + 6],
+                                ),
+                              );
+                            },
+                            childCount: filtered.length - 6,
+                          ),
+                        ),
+                      ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                  ],
+                ),
               );
             },
           ),
@@ -259,6 +266,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildShimmerGrid() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -276,7 +287,11 @@ class _HomePageState extends State<HomePage> {
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                return _buildSkeletonCard();
+                return _buildSkeletonCard(
+                  theme: theme,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
+                );
               },
               childCount: 6,
             ),
@@ -287,23 +302,28 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSkeletonCard() {
+  Widget _buildSkeletonCard({
+    required ThemeData theme,
+    required Color baseColor,
+    required Color highlightColor,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
+        baseColor: baseColor,
+        highlightColor: highlightColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               height: 120,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
               ),
             ),
             Padding(
@@ -314,13 +334,13 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     height: 12,
                     width: double.infinity,
-                    color: Colors.white,
+                    color: theme.colorScheme.surfaceVariant,
                   ),
                   const SizedBox(height: 8),
                   Container(
                     height: 10,
                     width: 120,
-                    color: Colors.white,
+                    color: theme.colorScheme.surfaceVariant,
                   ),
                 ],
               ),

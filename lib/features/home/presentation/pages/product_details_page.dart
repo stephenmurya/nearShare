@@ -36,6 +36,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         ? widget.product.images!
         : [widget.product.image];
 
+    final listerName =
+        widget.product.postedByName ?? widget.product.postedBy;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -123,33 +126,47 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   ),
 
                   // Carousel
-                  PageView.builder(
-                    itemCount: images.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentImageIndex = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final imageWidget = CachedNetworkImage(
-                        imageUrl: images[index],
-                        fit: BoxFit.contain, // Ensure full image fits
-                        placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
-                          child: Container(color: Colors.white),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductImageViewerPage(
+                            images: images,
+                            initialIndex: _currentImageIndex,
+                            heroTag: 'product-image-${widget.product.id}-0',
+                          ),
                         ),
-                        errorWidget: (context, url, error) =>
-                            const Icon(IconsaxPlusLinear.warning_2),
                       );
-                      if (index == 0) {
-                        return Hero(
-                          tag: 'product-image-${widget.product.id}-0',
-                          child: imageWidget,
-                        );
-                      }
-                      return imageWidget;
                     },
+                    child: PageView.builder(
+                      itemCount: images.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentImageIndex = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final imageWidget = CachedNetworkImage(
+                          imageUrl: images[index],
+                          fit: BoxFit.contain, // Ensure full image fits
+                          placeholder: (context, url) => Shimmer.fromColors(
+                            baseColor: Colors.grey[300]!,
+                            highlightColor: Colors.grey[100]!,
+                            child: Container(color: Colors.white),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const Icon(IconsaxPlusLinear.warning_2),
+                        );
+                        if (index == 0) {
+                          return Hero(
+                            tag: 'product-image-${widget.product.id}-0',
+                            child: imageWidget,
+                          );
+                        }
+                        return imageWidget;
+                      },
+                    ),
                   ),
 
                   // Counter Chip
@@ -269,7 +286,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   ),
 
                   // Lister Card
-                  if (widget.product.postedBy != null) ...[
+                  if (listerName != null) ...[
                     const SizedBox(height: 16),
                     GestureDetector(
                       onTap: () {
@@ -277,7 +294,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => ListerProfilePage(
-                              listerName: widget.product.postedBy!,
+                              listerName: listerName,
                               profilePic: widget.product.userProfilePic,
                               rating: widget.product.userRating,
                             ),
@@ -314,7 +331,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    widget.product.postedBy!,
+                                    listerName,
                                     style: GoogleFonts.interTight(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
@@ -497,6 +514,138 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class ProductImageViewerPage extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+  final String heroTag;
+
+  const ProductImageViewerPage({
+    super.key,
+    required this.images,
+    required this.initialIndex,
+    required this.heroTag,
+  });
+
+  @override
+  State<ProductImageViewerPage> createState() => _ProductImageViewerPageState();
+}
+
+class _ProductImageViewerPageState extends State<ProductImageViewerPage> {
+  late final PageController _controller;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(
+            IconsaxPlusLinear.close_circle,
+            color: theme.colorScheme.onSurface,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Gallery',
+          style: GoogleFonts.interTight(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: widget.images.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final imageWidget = CachedNetworkImage(
+                  imageUrl: widget.images[index],
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(color: Colors.white),
+                  ),
+                  errorWidget: (context, url, error) =>
+                      const Icon(IconsaxPlusLinear.warning_2),
+                );
+                return InteractiveViewer(
+                  child: index == widget.initialIndex
+                      ? Hero(tag: widget.heroTag, child: imageWidget)
+                      : imageWidget,
+                );
+              },
+            ),
+          ),
+          SizedBox(
+            height: 90,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: widget.images.length,
+              itemBuilder: (context, index) {
+                final isSelected = index == _currentIndex;
+                return GestureDetector(
+                  onTap: () {
+                    _controller.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outlineVariant,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: CachedNetworkImage(
+                        imageUrl: widget.images[index],
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
